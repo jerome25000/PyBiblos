@@ -1,0 +1,98 @@
+# Every test file has one or more tests...
+test_name: Test GET simple
+
+stages:
+  - name: Make sure we have the right ID
+
+    request:
+      url: http://127.0.0.1:5000/authors/1
+      method: GET
+
+    response:
+      status_code: 200
+      body:
+        id: 1
+        name : Brussolo
+        firstname : Serge
+
+---
+
+test_name : Test UPDATE
+
+stages:
+  - name: test update firstname of author id = 1 
+    request:
+      url: http://127.0.0.1:5000/authors/1
+      method: PUT
+      json:
+        id: 1
+        name : Brussolo
+        firstname : Sergio
+    
+    response:
+      status_code: 200
+
+  - name: check author with id=1 really modified
+    request:
+      url: http://127.0.0.1:5000/authors/1
+      method: GET
+
+    response:
+      status_code: 200
+      body:
+        id: 1
+        name: Brussolo
+        firstname: Sergio
+
+---        
+
+test_name : Test CREATION
+
+stages:
+  - name: test creation of new author
+    request:
+      url: http://127.0.0.1:5000/authors/
+      method: POST
+      json:
+        name : Camus
+        firstname : Jerome
+    
+    response:
+      status_code: 201
+      body:
+        id: 4
+        name: Camus
+        firstname : Jerome
+  
+  - name: check author with id=4 really created
+    request:
+      url: http://127.0.0.1:5000/authors/4
+      method: GET
+
+    response:
+      status_code: 200
+      body:
+        id: 4
+        name: Camus
+        firstname: Jerome
+
+---        
+
+test_name : Test DELETION
+
+stages:
+  - name: test deletion of author
+    request:
+      url: http://127.0.0.1:5000/authors/4
+      method: DELETE
+      
+    response:
+      status_code: 200
+      
+  - name: test author is=4 no more exists
+    request:
+      url: http://127.0.0.1:5000/authors/4
+      method: GET
+      
+    response:
+      status_code: 404

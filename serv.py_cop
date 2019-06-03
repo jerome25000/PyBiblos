@@ -1,0 +1,168 @@
+#coding=utf-8
+from flask import Flask
+from flask_restplus import Api, Resource, fields
+import json
+
+import dbmanager
+import sys
+
+managerDb = None
+
+app = Flask(__name__)
+api = Api(app, version='0.1', title='Biblos API', description='Biblos API')
+
+authors_ns = api.namespace('authors', description='Authors operations')
+books_ns = api.namespace('books', description='Books operations')
+
+authorModel = api.model('Author', {
+    'id': fields.Integer(readOnly=True, description='Auteur unique id'),
+    'name': fields.String(required=True, description='Nom'),
+    'surname': fields.String(required=False, description='Prenom')
+})
+
+bookModel = api.model('Book', {
+    'id': fields.Integer(readOnly=True, description='Book unique id'),
+    'title': fields.String(required=True, description='Titre'),
+    'collected': fields.Boolean(default=True, description='Collection'),
+    'year': fields.Integer(required=True, description="Année d'écriture"),
+    'authors': fields.List(fields.Nested(authorModel), description="Liste des auteurs")
+})
+
+
+def pagination(func):
+    #print("pagination!")
+
+    def wrapper(*args, **kwargs):
+        response = func(*args)
+        print(response)
+        print(type(response))
+        # response['toto'] = 'hello'
+        print(len(response))
+        page = {'data': response, 'pagination': {'currentPage': 1, 'pageSize': len(response), 'pageTotal': 5}}
+        print(page)
+        return page
+    return wrapper
+
+
+class AuthorDao(object):
+
+    def __init__(self):
+        self.counter = 0
+        self.authors = []
+
+    def get(self, id):
+        for author in self.authors:
+            if author['id'] == id:
+                return author
+        api.abort(404, "Author {} doesn't exist".format(id))
+
+    def create(self, data):
+        author = data
+        author['id'] = self.counter = self.counter + 1
+        self.authors.append(author)
+        return author
+
+    def update(self, id, data):
+        author = self.get(id)
+        author.update(data)
+        return author
+
+    def delete(self, id):
+        author = self.get(id)
+        self.authors.remove(author)
+
+
+class BookDao(object):
+
+    def __init__(self):
+        self.counter = 0
+        self.books = []
+
+    def get(self, id):
+        for book in self.books:
+            if book['id'] == id:
+                return book
+        api.abort(404, "Book {} doesn't exist".format(id))
+
+    def create(self, data):
+        book = data
+        book['id'] = self.counter = self.counter + 1
+        self.books.append(book)
+        return book
+
+    def update(self, id, data):
+        book = self.get(id)
+        book.update(data)
+        return book
+
+    def delete(self, id):
+        book = self.get(id)
+        self.books.remove(book)
+
+
+author1 = {'name': 'Brussolo', 'surname': 'Serge'}
+author2 = {'name': 'Priest', 'surname': 'Christopher'}
+author3 = {'name': 'Faye', 'surname': 'Estelle'}
+
+DAOAuth = AuthorDao()
+DAOAuth.create(author1)
+DAOAuth.create(author2)
+DAOAuth.create(author3)
+
+DAOBook = BookDao()
+DAOBook.create({'title': 'Les lutteurs immobiles', 'year': 1985, 'authors': [author1]})
+DAOBook.create({'title': "L'adjacent", 'year': 2012, 'authors': [author1, author2]})
+DAOBook.create({'title': 'Un éclat de givre', 'year': 2016, 'authors': [author3]})
+
+
+@authors_ns.route('/')
+class AuthorsList(Resource):
+    ''' Gestion des auteurs! '''
+    @authors_ns.doc('Liste des auteurs')
+    # @authors_ns.marshal_list_with(authorModel) : remove because of pagination
+    @pagination
+    def get(self):
+        ''' Liste des auteurs '''
+        return DAOAuth.authors
+
+
+@authors_ns.route('/<int:id>')
+@authors_ns.response(404, 'Author not found')
+@authors_ns.param('id', 'The author id')
+class Author(Resource):
+    '''Show a single author item and lets you delete them'''
+    @authors_ns.doc('get_author')
+    @authors_ns.marshal_with(authorModel)
+    def get(self, id):
+        '''Fetch a given resource'''
+        return DAOAuth.get(id)
+
+
+@books_ns.route('/')
+class BooksList(Resource):
+    ''' Gestion des livres! '''
+    @books_ns.doc('Liste des livres')
+    # @books_ns.marshal_list_with(bookModel) : remove because of pagination
+    @pagination
+    def get(self):
+        return DAOBook.books
+
+
+@books_ns.route('/<int:id>')
+@books_ns.response(404, 'Book not found')
+@books_ns.param('id', 'The book id')
+class Book(Resource):
+    '''Show a single book item and lets you delete them'''
+    @authors_ns.doc('get_book')
+    @authors_ns.marshal_with(bookModel)
+    def get(self, id):
+        '''Fetch a given resource'''
+        return DAOBook.get(id)
+
+if __name__ == '__main__':
+    if (len(sys.argv) > 1):
+        print("dbName %s" %(sys.argv[1]))
+        managerDb = dbmanager.DbManager(sys.argv[1])
+        app.run(debug=True)
+    else: 
+        print("error : manque argument nomDb!")
