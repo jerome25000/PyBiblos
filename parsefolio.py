@@ -40,8 +40,8 @@ def postBook(book):
     print(book)
     headers = {'Content-type': 'application/json'}
     # r = requests.post('http://localhost:5000/books/', headers=headers, data=book)
-    r = requests.post('http://127.0.0.1:5000/books/', headers=headers, data=json.dumps(book))
-    print(r)
+    #r = requests.post('http://127.0.0.1:5000/books/', headers=headers, data=json.dumps(book))
+    #print(r)
 
 
 books = readFile('foliosf.txt')

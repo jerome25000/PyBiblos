@@ -3,7 +3,7 @@
 test_name : Test pagination
 
 stages:
-  - name: test pagination 1
+  - name: test pagination 1 (authors)
     request:
       url: http://127.0.0.1:5000/authors/
 
@@ -16,7 +16,7 @@ stages:
           pageTotal: 1
           totalRecords: 3
 
-  - name: test pagination 2
+  - name: test pagination 2 (authors)
     request:
       url: http://127.0.0.1:5000/authors/
       params:
@@ -36,9 +36,60 @@ stages:
           totalRecords: 3
 
 
-  - name: test pagination 3
+  - name: test pagination 3 (authors)
     request:
       url: http://127.0.0.1:5000/authors/
+      params:
+        pageNumber: 2
+        pageSize: 2
+
+    response:
+      status_code: 200
+      body:
+        data:
+          - id : 3          
+        pagination:
+          pageNumber: 2
+          pageSize: 2
+          pageTotal: 2
+          totalRecords: 3
+
+  - name: test pagination 4 (books)
+    request:
+      url: http://127.0.0.1:5000/books/
+
+    response:
+      status_code: 200
+      body:
+        pagination:
+          pageNumber: 1
+          pageSize: 20
+          pageTotal: 1
+          totalRecords: 3
+
+  - name: test pagination 5 (books)
+    request:
+      url: http://127.0.0.1:5000/books/
+      params:
+        pageNumber: 1
+        pageSize: 2
+
+    response:
+      status_code: 200
+      body:
+        data:
+          - id : 1
+          - id : 2
+        pagination:
+          pageNumber: 1
+          pageSize: 2
+          pageTotal: 2
+          totalRecords: 3
+
+
+  - name: test pagination 6 (books)
+    request:
+      url: http://127.0.0.1:5000/books/
       params:
         pageNumber: 2
         pageSize: 2
