@@ -121,12 +121,13 @@ class Author(Resource):
             return author
 
     ''' Update a given author '''
-    @authors_ns.doc('get_author')
+    @authors_ns.doc('update_author')
     @authors_ns.marshal_with(authorModel)
     def put(self, id):
         return daoAuth.update(id, api.payload)
 
-    @authors_ns.doc('get_author')
+    ''' Delete a given author '''
+    @authors_ns.doc('delete_author')
     def delete(self, id):
         daoAuth.delete(id)
 
@@ -158,8 +159,8 @@ class BooksList(Paginator):
 @books_ns.param('id', 'The book id')
 class Book(Resource):
     '''Show a single book item and lets you delete them'''
-    @authors_ns.doc('get_book')
-    @authors_ns.marshal_with(bookModel)
+    @books_ns.doc('get_book')
+    @books_ns.marshal_with(bookModel)
     def get(self, id):
         '''Fetch a given resource'''
         book = daoBook.get(id)
@@ -167,6 +168,17 @@ class Book(Resource):
             api.abort(404, "Book {} doesn't exist".format(id))
         else:
             return book
+
+    ''' Update a given book '''
+    @books_ns.doc('update_book')
+    @books_ns.marshal_with(bookModel)
+    def put(self, id):
+        return daoBook.update(id, api.payload)
+
+    ''' Delete a given book '''
+    @books_ns.doc('delete_book')
+    def delete(self, id):
+        daoBook.delete(id)
 
 
 if __name__ == '__main__':
