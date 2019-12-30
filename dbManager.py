@@ -55,38 +55,8 @@ class DbManager:
         self.conn.close()
 
     def createDb(self, sqlFilename):
-        with open("test.sql") as file:
+        with open(sqlFilename) as file:
+            print("Creating DB with script %s" % (sqlFilename))
             data=file.read()
             self.conn.executescript(data)
-        '''
-        self.executeSql('DROP TABLE AUTHOR')
-        self.executeSql('CREATE TABLE AUTHOR (ID NUM, UPDATE_DATE DATE, DATA TEXT)')
-        self.executeSql('DROP TABLE BOOK')
-        self.executeSql('CREATE TABLE BOOK (ID NUM, UPDATE_DATE DATE, DATA TEXT)')
-        '''
-
-if __name__ == '__main__':
-    dbManager = DbManager('test.db')
-
-    dbManager.executeSql('DROP TABLE DATA')
-    dbManager.executeSql('CREATE TABLE DATA (id num, data text, update_date date)')
-
-    print('passed!')
-
-    data = {'a': 5, 'b': 10, 'c': 'hello'}
-    data2 = {'a': 10, 'b': 20, 'c': 'hello2'}
-    id = 10
-    ret = dbManager.update('INSERT INTO DATA (ID, DATA, UPDATE_DATE) VALUES (?,?,?)', (id, json.dumps(data), datetime.datetime.now()))
-    print('rowId=%d' %(ret))
-    id = 11
-    ret=dbManager.update('INSERT INTO DATA (ID, DATA, UPDATE_DATE) VALUES (?,?,?)', (id, json.dumps(data2), datetime.datetime.now()))
-    print('rowId=%d' %(ret))
-
-    rows = dbManager.select("SELECT id, data, update_date from DATA")
-
-    for row in rows:
-        print('{} {} {}'.format(row[0], row[1], row[2]))
-
-    dbManager.commit()
-    dbManager.close()
-
+            print("Script %s executed!" % (sqlFilename))
