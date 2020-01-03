@@ -16,7 +16,9 @@ managerDb = None
 daoAuth = TableDataDao('AUTHOR')
 daoBook = TableDataDao('BOOK')
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", static_url_path="")
+print("******************* config" + str(app.config))
+
 api = Api(app, version='0.1', title='Biblos API', description='Biblos API')
 
 authors_ns = api.namespace('authors', description='Authors operations')
@@ -36,6 +38,15 @@ bookModel = api.model('Book', {
     'authors': fields.List(fields.Nested(authorModel), description="Liste des auteurs"),
     'number': fields.Integer(required=False, description="Numéro de série")
 })
+
+# @app.after_request
+# def after_request(response):
+#     response.headers.add('Access-Control-Allow-Origin', '*')
+#     response.headers.add('Cache-Control', 'no-store')
+#     response.headers.add('Pragma', 'no-cache')
+#     print('**********************\n')
+#     print(str(response))
+#     return response
 
 
 def pagination(func):
@@ -94,6 +105,7 @@ class AuthorsList(Paginator):
     # @authors_ns.marshal_list_with(authorModel) : remove because of pagination
     @pagination
     def get(self):
+        print("get authors....")
         ''' Liste des auteurs '''        
         Paginator.compute(self, daoAuth.count())
         return daoAuth.getAll(Paginator.getPageSize(self), Paginator.getOffset(self))
@@ -142,6 +154,7 @@ class BooksList(Paginator):
     # @books_ns.marshal_list_with(bookModel) : remove because of pagination
     @pagination
     def get(self):
+        print("get books....")
         ''' Liste des livres '''
         Paginator.compute(self, daoAuth.count())
         return daoBook.getAll(Paginator.getPageSize(self), Paginator.getOffset(self))
@@ -194,4 +207,4 @@ if __name__ == '__main__':
     initDao()
     if arg.test:
         managerDb.createDb('test.sql')
-    app.run(debug=True)
+    app.run(host= '0.0.0.0', debug=True, port=5000)
