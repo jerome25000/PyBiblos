@@ -43,5 +43,8 @@ class TableDataDao():
         self.dbManager.update(sqlText, [id])
 
     def update(self, id, data):
+
+        initialData = self.get(id)
+
         sqlText = 'UPDATE %s SET DATA = ?, UPDATE_DATE = ? WHERE ID = ?' % (self.tableName)
-        self.dbManager.update(sqlText, [json.dumps(data), datetime.datetime.now(), id])
+        self.dbManager.partialUpdate(sqlText, initialData, data, datetime.datetime.now(), id)

@@ -28,7 +28,9 @@ books_ns = api.namespace('books', description='Books operations')
 authorModel = api.model('Author', {
     'id': fields.Integer(readOnly=True, description='Auteur unique id'),
     'name': fields.String(required=True, description='Nom'),
-    'firstname': fields.String(required=False, description='Prenom')
+    'firstname': fields.String(required=False, description='Prenom'),
+    'yearOfBirth' : fields.String(required=False, description="Année de naissance"),
+    'country' : fields.String(required=False, description="Nationali"),
 })
 
 bookModel = api.model('Book', {
@@ -37,7 +39,11 @@ bookModel = api.model('Book', {
     'collected': fields.Boolean(default=False, description='Collection'),
     'year': fields.Integer(required=True, description="Année d'écriture"),
     'authors': fields.List(fields.Nested(authorModel), description="Liste des auteurs"),
-    'number': fields.Integer(required=False, description="Numéro de série")
+    'number': fields.Integer(required=False, description="Numéro de série"),
+    'editor' : fields.String(required=False, description="Editeur"),
+    'collection' : fields.String(required=False, description="Nom de la collection de l'éditeur"),
+    'serie' : fields.String(required=False, description="Nom de la série"),
+    'numSerie' : fields.String(required=False, description="Numéro dans la série")
 })
 
 # @app.after_request
@@ -208,4 +214,4 @@ if __name__ == '__main__':
     initDao()
     if arg.test:
         managerDb.createDb('test.sql')
-    app.run(host= '127.0.0.1', debug=True, port=5000)
+    app.run(host= '127.0.0.1', debug=False, port=5000)

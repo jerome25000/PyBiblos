@@ -20,14 +20,14 @@ stages:
 test_name : Test UPDATE
 
 stages:
-  - name: test update firstname of author id = 1 
+  - name: test update firstnam and add new field (name not changed) of author id = 1 
     request:
       url: http://127.0.0.1:5000/authors/1
       method: PUT
       json:
         id: 1
-        name : Brussolo
-        firstname : Sergio
+        firstname: Sergio
+        yearOfBirth: 1951
     
     response:
       status_code: 200
@@ -43,6 +43,7 @@ stages:
         id: 1
         name: Brussolo
         firstname: Sergio
+        yearOfBirth: "1951"
 
 ---        
 

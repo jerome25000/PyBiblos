@@ -23,9 +23,25 @@ class DbManager:
     def update(self, sqlCmd, params):
         try:
             self.lock.acquire(True)
-            for p in params:
-                print(p)
             self.cursor.execute(sqlCmd, params)
+            self.commit()
+            return self.cursor.lastrowid
+        except sql.OperationalError as e:
+            print("Sqlite error : %s" % (str(e)))
+            pass
+        finally:
+            self.lock.release()
+
+    def partialUpdate(self, sqlCmd, initialData, data, dateModif, id):
+        try:
+            self.lock.acquire(True)
+            
+            for key in data:
+                initialData[key] = data[key]
+
+            print(json.dumps(initialData))
+
+            self.cursor.execute(sqlCmd, [json.dumps(initialData), dateModif, id])
             self.commit()
             return self.cursor.lastrowid
         except sql.OperationalError as e:
