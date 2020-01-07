@@ -1,3 +1,4 @@
+#!/bin/sh
 # coding=utf-8
 from flask import Flask
 from flask_restplus import Api, Resource, fields, reqparse
@@ -207,4 +208,4 @@ if __name__ == '__main__':
     initDao()
     if arg.test:
         managerDb.createDb('test.sql')
-    app.run(host= '0.0.0.0', debug=True, port=5000)
+    app.run(host= '127.0.0.1', debug=True, port=5000)
