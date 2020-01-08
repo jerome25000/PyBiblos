@@ -2,6 +2,7 @@
 import datetime
 import json
 
+JSON_EXTRACT_FORMAT = "json_extract(DATA, '$.%s') = '%s'"
 
 class TableDataDao():
 
@@ -19,6 +20,19 @@ class TableDataDao():
             return json.loads(row[0][0])
         else:
             return None
+
+    '''
+    ' Get with criteria, criteriaDict : key = json field name, value = value to test, example : title : 'mybook'
+    '''
+    def getWithCriteria(self, criteriaDict):
+
+        where = "AND ".join(map(lambda c : JSON_EXTRACT_FORMAT %(c, criteriaDict[c]), criteriaDict))
+        print(where)
+        row = self.dbManager.select('SELECT DATA FROM %s WHERE %s' % (self.tableName, where))
+        if row:
+            return json.loads(row[0][0])
+        else:
+            return None        
 
     def count(self):
         result = self.dbManager.select('SELECT COUNT(*) FROM %s' % (self.tableName))
@@ -43,8 +57,6 @@ class TableDataDao():
         self.dbManager.update(sqlText, [id])
 
     def update(self, id, data):
-
         initialData = self.get(id)
-
         sqlText = 'UPDATE %s SET DATA = ?, UPDATE_DATE = ? WHERE ID = ?' % (self.tableName)
         self.dbManager.partialUpdate(sqlText, initialData, data, datetime.datetime.now(), id)
