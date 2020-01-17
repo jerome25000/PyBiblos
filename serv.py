@@ -30,7 +30,8 @@ authorModel = api.model('Author', {
     'name': fields.String(required=True, description='Nom'),
     'firstname': fields.String(required=False, description='Prenom'),
     'yearOfBirth' : fields.String(required=False, description="Année de naissance"),
-    'country' : fields.String(required=False, description="Nationali"),
+    'country' : fields.String(required=False, description="Nationalité"),
+    #'books' : fields.List
 })
 
 bookModel = api.model('Book', {
@@ -100,6 +101,7 @@ class Paginator(Resource):
         print('pageSize =%d' % self.pageSize)
         print('pageNumber =%d' % self.pageNumber)
         print('offset =%d' % self.offset)
+        print('count =%d' % count)
 
 
 @authors_ns.route('/')
@@ -157,29 +159,53 @@ class BooksList(Paginator):
         Paginator.__init__(self, api)        
 
     ''' Gestion des livres! '''
-    @books_ns.doc('Liste des livres')
+    @books_ns.doc('Book list')
     # @books_ns.marshal_list_with(bookModel) : remove because of pagination
     @pagination
     def get(self):
         print("get books....")
         ''' Liste des livres '''
-        Paginator.compute(self, daoAuth.count())
+        Paginator.compute(self, daoBook.count())
         return daoBook.getAll(Paginator.getPageSize(self), Paginator.getOffset(self))
 
-    @books_ns.doc('Creation livre')
+    @books_ns.doc('Create book')
     @books_ns.expect(bookModel)
     @books_ns.marshal_with(bookModel, code=201)
     def post(self):
         print(api.payload)
-        return daoBook.create(api.payload), 201
-
+        bookCreated = daoBook.create(api.payload)
+        #create author if needed
+        if bookCreated.get('authors') :
+            for author in bookCreated['authors']:
+                criteria = { "name" : author['name'], "firstname" : author['firstname'] }
+                authorFound = daoAuth.getWithCriteria(criteria)
+                bookToAppend = { "title" : bookCreated['title'], "id" : bookCreated['id'] }
+                if authorFound :
+                    authorToUpdate = authorFound.copy()               
+                    print("Found existing author %s %s add book" %(authorToUpdate['name'], authorToUpdate['firstname']))
+                    if not authorToUpdate.get('books'):
+                        authorToUpdate['books'] = []
+                    authorToUpdate['books'].append(bookToAppend)
+                    daoAuth.update(authorToUpdate['id'], authorToUpdate)
+                    print('author updated!')
+                    author['id'] = authorFound['id']
+                else :
+                    newAuthor = { "books" : [] }
+                    newAuthor['books'].append(bookToAppend)
+                    newAuthor.update(criteria)
+                    authorCreated = daoAuth.create(newAuthor)
+                    author['id'] = authorCreated['id']
+                    print('author created!')            
+            daoBook.update(bookCreated['id'], bookCreated), 201
+        return bookCreated, 201
+        
 
 @books_ns.route('/<int:id>')
 @books_ns.response(404, 'Book not found')
 @books_ns.param('id', 'The book id')
 class Book(Resource):
     '''Show a single book item and lets you delete them'''
-    @books_ns.doc('get_book')
+    @books_ns.doc('Get_book')
     @books_ns.marshal_with(bookModel)
     def get(self, id):
         '''Fetch a given resource'''
@@ -190,13 +216,13 @@ class Book(Resource):
             return book
 
     ''' Update a given book '''
-    @books_ns.doc('update_book')
+    @books_ns.doc('Update_book')
     @books_ns.marshal_with(bookModel)
     def put(self, id):
         return daoBook.update(id, api.payload)
 
     ''' Delete a given book '''
-    @books_ns.doc('delete_book')
+    @books_ns.doc('Delete_book')
     def delete(self, id):
         daoBook.delete(id)
 
@@ -214,4 +240,4 @@ if __name__ == '__main__':
     initDao()
     if arg.test:
         managerDb.createDb('test.sql')
-    app.run(host= '127.0.0.1', debug=False, port=5000)
+    app.run(host= '127.0.0.1', debug=True, port=5000)

@@ -55,8 +55,7 @@ stages:
       method: POST
       json:
         title : Le rire du lance flamme
-        year : 1984
-        fff : hello
+        year : 1984        
     
     response:
       status_code: 201
@@ -75,6 +74,25 @@ stages:
         id: 4
         title : Le rire du lance flamme
         year : 1984
+
+---
+test_name : Test CREATION with given author
+
+stages:
+  - name: test creation of new book with given author
+    request:
+      url: http://127.0.0.1:5000/books/
+      method: POST
+      json:
+        title : Le rire du lance flamme
+        year : 1984
+        authors : [ { name : Brussolo, firstname : Serge}]
+    
+    response:
+      status_code: 201
+      body:
+        id: 5
+
 
 ---        
 
