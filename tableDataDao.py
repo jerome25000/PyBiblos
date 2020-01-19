@@ -32,7 +32,7 @@ class TableDataDao():
         if row:
             return json.loads(row[0][0])
         else:
-            return None        
+            return None       
 
     def count(self):
         result = self.dbManager.select('SELECT COUNT(*) FROM %s' % (self.tableName))

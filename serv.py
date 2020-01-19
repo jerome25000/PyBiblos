@@ -25,13 +25,24 @@ api = Api(app, version='0.1', title='Biblos API', description='Biblos API')
 authors_ns = api.namespace('authors', description='Authors operations')
 books_ns = api.namespace('books', description='Books operations')
 
+bookMiniModel = api.model('BookMiniModel', {
+    'id': fields.Integer(readOnly=True, description='Book unique id'),
+    'title': fields.String(required=True, description='Titre'),
+})
+
+authorMiniModel = api.model('AuthorMiniModel', {
+    'id': fields.Integer(readOnly=True, description='Auteur unique id'),
+    'name': fields.String(required=True, description='Nom'),
+    'firstname': fields.String(required=False, description='Prenom') 
+})
+
 authorModel = api.model('Author', {
     'id': fields.Integer(readOnly=True, description='Auteur unique id'),
     'name': fields.String(required=True, description='Nom'),
     'firstname': fields.String(required=False, description='Prenom'),
-    'yearOfBirth' : fields.String(required=False, description="Année de naissance"),
-    'country' : fields.String(required=False, description="Nationalité"),
-    #'books' : fields.List
+    'yearOfBirth' : fields.String(required=False, description="Année de naissance", skip_none=True),
+    'country' : fields.String(required=False, description="Nationalité", skip_none=True),
+    'books' : fields.List(fields.Nested(bookMiniModel), description="Liste des livres")
 })
 
 bookModel = api.model('Book', {
@@ -39,7 +50,7 @@ bookModel = api.model('Book', {
     'title': fields.String(required=True, description='Titre'),
     'collected': fields.Boolean(default=False, description='Collection'),
     'year': fields.Integer(required=True, description="Année d'écriture"),
-    'authors': fields.List(fields.Nested(authorModel), description="Liste des auteurs"),
+    'authors': fields.List(fields.Nested(authorMiniModel), description="Liste des auteurs"),
     'number': fields.Integer(required=False, description="Numéro de série"),
     'editor' : fields.String(required=False, description="Editeur"),
     'collection' : fields.String(required=False, description="Nom de la collection de l'éditeur"),
@@ -132,7 +143,7 @@ class AuthorsList(Paginator):
 class Author(Resource):
     '''Show a single author item and lets you delete them'''
     @authors_ns.doc('get_author')
-    @authors_ns.marshal_with(authorModel)
+    @authors_ns.marshal_with(authorModel, skip_none=True)
     def get(self, id):
         '''Fetch a given resource'''
         author = daoAuth.get(id)
@@ -174,6 +185,7 @@ class BooksList(Paginator):
     def post(self):
         print(api.payload)
         bookCreated = daoBook.create(api.payload)
+        print("book created, id = %s" %(bookCreated['id']))
         #create author if needed
         if bookCreated.get('authors') :
             for author in bookCreated['authors']:
@@ -206,7 +218,7 @@ class BooksList(Paginator):
 class Book(Resource):
     '''Show a single book item and lets you delete them'''
     @books_ns.doc('Get_book')
-    @books_ns.marshal_with(bookModel)
+    @books_ns.marshal_with(bookModel, skip_none=True)
     def get(self, id):
         '''Fetch a given resource'''
         book = daoBook.get(id)
