@@ -3,6 +3,8 @@ import io
 import requests
 import json
 
+headers = {'Content-type': 'application/json'} 
+
 def readFile(filename):
     with io.open(filename, 'r', encoding='utf-8') as f:
         txt = f.read().splitlines()
@@ -36,11 +38,13 @@ def readFile(filename):
     return books
 
 
-def postBook(book):
-    print(book)
-    headers = {'Content-type': 'application/json'}
-    # r = requests.post('http://localhost:5000/books/', headers=headers, data=book)
-    #r = requests.post('http://127.0.0.1:5000/books/', headers=headers, data=json.dumps(book))
+def postAuthors(author) :
+    authorCreated = requests.post('http://127.0.0.1:5000/authors/', headers=headers, data=json.dumps(author))    
+    return json.loads(authorCreated.content)['id']
+
+
+def postBook(book):    
+    bookCreated = requests.post('http://127.0.0.1:5000/books/', headers=headers, data=json.dumps(book))    
     #print(r)
 
 
