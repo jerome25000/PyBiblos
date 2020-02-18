@@ -3,33 +3,28 @@ Vue.component('paginate', VuejsPaginate)
 var app = new Vue({ 
     el: '#app',
     data: {
-        message: 'Hello Vue!!!',
         authors : null,
-        books : null,
-        book1 : null,
-        pages : 15
+        pageNumber : 10,
+        pageSize : 20,
+        pageTotal : 20,
+        serverUrl : null,
     },
     methods: {
-      click: function(page) {
-        console.log(page)
+      getAuthors : function(pageNumber) {
+        this.pageNumber = pageNumber;
+        axios
+         .get(this.serverUrl + '/authors?pageNumber=' + this.pageNumber + '&pageSize=' + this.pageSize)
+         .then(response => {
+            this.authors = response.data.data;
+            this.pageTotal = response.data.pagination.pageTotal;
+          })
+         .catch(error => console.log(error))
       }
     },
-    mounted: function() {
-      axios
-       .get('http://localhost/authors')
-       .then(response => (this.authors = response.data.data))
-       .catch(error => console.log(error));
-
-       // axios
-       // .get('http://localhost/books')
-       // .then(response => (this.books = response.data.data))
-       // .catch(error => console.log(error))
-
-       // axios
-       // .get('http://localhost/books/1')
-       // .then(response => (this.book1 = response))
-       // .catch(error => console.log(error))
-    }
+    created:function () {
+        this.serverUrl = window.location.origin;
+        this.getAuthors(this.pageNumber);
+    },
 });
 
 
