@@ -1,1 +1,1 @@
-python3 serv.py prod.db 
+python3 serv.py conf.yaml

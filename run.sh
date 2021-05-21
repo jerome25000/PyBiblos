@@ -1,1 +1,1 @@
-python3 serv.py test.db --test 
+python3 serv.py conf_test.yaml

@@ -1,29 +1,50 @@
 #!/bin/sh
 # coding=utf-8
 from flask import Flask
-from flask_restplus import Api, Resource, fields, reqparse
+#from flask_restplus 
+from flask_restx import Api, Resource, fields, reqparse
 import json
 import argparse
+import yaml
+import hashlib
 
 from math import ceil
 from dbManager import DbManager
 from tableDataDao import TableDataDao
 
-parser = argparse.ArgumentParser(description='Biblos')
-parser.add_argument('dbName', type=str, help="database file name")
-parser.add_argument('--test', action="store_true", default=False, help="test mode", dest="test")
+def cypherPassword(password):
+    m = hashlib.sha256()
+    m.update(config['user']['passwordKey'].encode())
+    m.update(password.encode())
+    return m.hexdigest()
+
+def readConf(fileName) :
+    with open(fileName) as f:
+        return yaml.load(f, Loader=yaml.FullLoader)
+
+config = None
 
 managerDb = None
 daoAuth = TableDataDao('AUTHOR')
 daoBook = TableDataDao('BOOK')
+daoUser = TableDataDao('USER')
 
 app = Flask(__name__, static_folder="static", static_url_path="")
-print("******************* config" + str(app.config))
+#print("******************* config" + str(app.config))
 
 api = Api(app, version='0.1', title='Biblos API', description='Biblos API')
 
 authors_ns = api.namespace('authors', description='Authors operations')
 books_ns = api.namespace('books', description='Books operations')
+users_ns = api.namespace('users', description='Users operations')
+
+userModel = api.model('UserModel', {
+    'id' : fields.Integer(readOnly=True, description='User unique id'), 
+    'name' : fields.String(required=True, description='User name'),
+    'password' : fields.String(required=True, description='Password'),
+    'adminRight' : fields.Boolean(required=False, description='User admin'),
+    'writeRight' : fields.Boolean(required=False, description='User admin')
+})
 
 bookMiniModel = api.model('BookMiniModel', {
     'id': fields.Integer(readOnly=True, description='Book unique id'),
@@ -88,6 +109,7 @@ def pagination(func):
 def initDao():
     daoAuth.init(managerDb)
     daoBook.init(managerDb)
+    daoUser.init(managerDb)
 
 class Paginator(Resource):
     def __init__(self, api):
@@ -114,6 +136,52 @@ class Paginator(Resource):
         print('offset =%d' % self.offset)
         print('count =%d' % count)
 
+@users_ns.route('/<int:id>')
+@users_ns.response(404, 'User not found')
+@users_ns.param('id', 'The user id')
+class User(Resource):    
+    @users_ns.doc('get_user')
+    @users_ns.marshal_with(userModel, skip_none=True)
+    def get(self, id):
+        '''Fetch a given resource'''
+        user = daoUser.get(id)
+        if not user:
+            api.abort(404, "User {} doesn't exist".format(id))
+        else:
+            return user
+
+    ''' Update a given author '''
+    @users_ns.doc('update_user')
+    @users_ns.marshal_with(userModel)
+    def put(self, id):
+        if ('password' in api.payload):
+            api.payload['password'] = cypherPassword(api.payload['password'])
+        return daoUser.update(id, api.payload)
+    
+    ''' Delete a given author '''
+    @users_ns.doc('delete_user')
+    def delete(self, id):
+        daoUser.delete(id)
+
+@users_ns.route('/')
+class UserList(Paginator):
+    def __init__(self, api):
+        Paginator.__init__(self, api)        
+
+    @users_ns.doc('Users list')    
+    @pagination
+    def get(self):
+        Paginator.compute(self, daoUser.count())
+        return daoUser.getAll(Paginator.getPageSize(self), Paginator.getOffset(self))
+
+    ''' Create a given user '''
+    @users_ns.doc('create_user')
+    @users_ns.marshal_with(userModel)
+    def post(self):
+        print("*** create user api.payload")
+        if ('password' in api.payload):
+            api.payload['password'] = cypherPassword(api.payload['password'])
+        return daoUser.create(api.payload), 201        
 
 @authors_ns.route('/')
 class AuthorsList(Paginator):
@@ -124,8 +192,7 @@ class AuthorsList(Paginator):
     @authors_ns.doc('Liste des auteurs')
     # @authors_ns.marshal_list_with(authorModel) : remove because of pagination
     @pagination
-    def get(self):
-        print("get authors....")
+    def get(self):        
         ''' Liste des auteurs '''        
         Paginator.compute(self, daoAuth.count())
         return daoAuth.getAll(Paginator.getPageSize(self), Paginator.getOffset(self))
@@ -240,16 +307,25 @@ class Book(Resource):
 
 
 if __name__ == '__main__':
-    arg = parser.parse_args()
-    if arg.test:
+
+    parser = argparse.ArgumentParser(description='Biblos')    
+    parser.add_argument('conf', type=str, help="conf yaml file")
+    arg = parser.parse_args()    
+    config = readConf(arg.conf)
+
+    dbName = config['dbName']
+    test = config['test']
+
+    if test:
         print('test mode')
     else:
-        print('no test')
+        print('prod mode')
 
-    print("Running with dbName = %s" % (arg.dbName))
+    
+    print("Running with dbName = %s" % (dbName))
 
-    managerDb = DbManager(arg.dbName)
+    managerDb = DbManager(dbName)
     initDao()
-    if arg.test:
-        managerDb.createDb('test.sql')
+    if test:
+        managerDb.createDb(config['sql'])
     app.run(host= '127.0.0.1', debug=True, port=5000)
