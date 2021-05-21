@@ -1,0 +1,106 @@
+#Every test file has one or more tests...
+test_name: Test GET simple
+
+stages:
+  - name: Make sure we have the right ID
+
+    request:
+      url: http://127.0.0.1:5000/users/1
+      method: GET
+
+    response:
+      status_code: 200
+      body:
+        id: 1
+        name: admin       
+        password: "fba18a57977778ae0dff37cde75fb738fdc9fc36af4aba55b80ecff7066967b8"
+        adminRight: true
+        writeRight: true 
+
+---
+
+test_name : Test UPDATE
+
+stages:
+  - name: test update user id = 1 
+    request:
+      url: http://127.0.0.1:5000/users/1
+      method: PUT
+      json:
+        id: 1
+        name: admin
+        password: "newPassword"
+        adminRight: false
+        writeRight: false 
+    
+    response:
+      status_code: 200
+
+  - name: check user id=1 really modified
+    request:
+      url: http://127.0.0.1:5000/users/1
+      method: GET
+
+    response:
+      status_code: 200
+      body:
+        id: 1
+        name: admin
+        password: 8c802bee438bd87cb51d346846a8edf410c5df8092eebecf7a81f96e4c8c46fd
+        adminRight: false
+        writeRight: false 
+
+---      
+
+test_name : Test CREATION
+
+stages:
+  - name: test creation of new user
+    request:
+      url: http://127.0.0.1:5000/users/
+      method: POST
+      json:
+        name: user3
+        password: "myPassword"
+        adminRight: false
+        writeRight: true
+    
+    response:
+      status_code: 201
+      body:
+        id: 3
+        
+  - name: check user with id=3 really created
+    request:
+      url: http://127.0.0.1:5000/users/3
+      method: GET
+
+    response:
+      status_code: 200
+      body:
+        id: 3
+        name: user3
+        password: e6b1492b4a3a2f9295ccbcccd836d4e2744705f82aec4ec067fda3e193a3af4c
+        adminRight: false
+        writeRight: true
+
+---      
+
+test_name : Test DELETE
+
+stages:
+  - name: test delete of user3
+    request:
+      url: http://127.0.0.1:5000/users/3
+      method: DELETE      
+    
+    response:
+      status_code: 200      
+        
+  - name: test user3 no more exists
+    request:
+      url: http://127.0.0.1:5000/users/3
+      method: GET
+      
+    response:
+      status_code: 404

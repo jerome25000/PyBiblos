@@ -1,0 +1,4 @@
+test: false
+dbName: prod.db
+user:
+  passwordKey: ERDF234EGZVZAWS
