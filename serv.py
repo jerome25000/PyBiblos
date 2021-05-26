@@ -243,7 +243,12 @@ class Author(Resource):
     @authors_ns.doc('update_author')
     @authors_ns.marshal_with(authorModel)
     def put(self, id):
-        return daoAuth.update(id, api.payload)
+        author = daoAuth.update(id, api.payload)
+        print("****** " + str(author))
+        if not author:
+            api.abort(404, "Author {} doesn't exist".format(id))
+        else:
+            return author
 
     ''' Delete a given author '''
     @authors_ns.doc('delete_author')
@@ -317,8 +322,13 @@ class Book(Resource):
     ''' Update a given book '''
     @books_ns.doc('Update_book')
     @books_ns.marshal_with(bookModel)
-    def put(self, id):
-        return daoBook.update(id, api.payload)
+    def put(self, id):        
+        book = daoBook.update(id, api.payload)
+        print(" **** put book " + str(book))
+        if not book:
+            api.abort(404, "Book {} doesn't exist".format(id))
+        else:
+            return book
 
     ''' Delete a given book '''
     @books_ns.doc('Delete_book')

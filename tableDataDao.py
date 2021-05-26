@@ -58,5 +58,7 @@ class TableDataDao():
 
     def update(self, id, data):
         initialData = self.get(id)
+        if not initialData :
+            return None
         sqlText = 'UPDATE %s SET DATA = ?, UPDATE_DATE = ? WHERE ID = ?' % (self.tableName)
-        self.dbManager.partialUpdate(sqlText, initialData, data, datetime.datetime.now(), id)
+        return self.dbManager.partialUpdate(sqlText, initialData, data, datetime.datetime.now(), id)
