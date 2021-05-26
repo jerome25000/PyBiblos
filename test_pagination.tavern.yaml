@@ -2,6 +2,9 @@
 
 test_name : Test pagination
 
+strict:
+  - json:off
+
 stages:
   - name: test pagination 1 (authors)
     request:
@@ -9,7 +12,7 @@ stages:
 
     response:
       status_code: 200
-      body:
+      json:
         pagination:
           pageNumber: 1
           pageSize: 20
@@ -25,7 +28,7 @@ stages:
 
     response:
       status_code: 200
-      body:
+      json:
         data:
           - id : 1
           - id : 2
@@ -45,7 +48,7 @@ stages:
 
     response:
       status_code: 200
-      body:
+      json:
         data:
           - id : 3          
         pagination:
@@ -60,7 +63,7 @@ stages:
 
     response:
       status_code: 200
-      body:
+      json:
         pagination:
           pageNumber: 1
           pageSize: 20
@@ -76,7 +79,7 @@ stages:
 
     response:
       status_code: 200
-      body:
+      json:
         data:
           - id : 1
           - id : 2
@@ -96,7 +99,7 @@ stages:
 
     response:
       status_code: 200
-      body:
+      json:
         data:
           - id : 3          
         pagination:

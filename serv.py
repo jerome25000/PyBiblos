@@ -7,6 +7,7 @@ import json
 import argparse
 import yaml
 import hashlib
+import jwt
 
 from math import ceil
 from dbManager import DbManager
@@ -17,6 +18,13 @@ def cypherPassword(password):
     m.update(config['user']['passwordKey'].encode())
     m.update(password.encode())
     return m.hexdigest()
+
+def tokenize(userRow):
+    print(str(config['user']))
+    if 'password' in userRow :
+        del userRow['password']
+    del userRow['id']
+    return jwt.encode(userRow, config['user']['jwtKey'], algorithm="HS256")
 
 def readConf(fileName) :
     with open(fileName) as f:
@@ -37,6 +45,12 @@ api = Api(app, version='0.1', title='Biblos API', description='Biblos API')
 authors_ns = api.namespace('authors', description='Authors operations')
 books_ns = api.namespace('books', description='Books operations')
 users_ns = api.namespace('users', description='Users operations')
+login_ns = api.namespace('login', description='Login operations')
+
+loginModel = api.model('LoginModel', {
+    'userName' : fields.String(required=True, description='user name'),
+    'password' : fields.String(required=True, description='Password')
+})
 
 userModel = api.model('UserModel', {
     'id' : fields.Integer(readOnly=True, description='User unique id'), 
@@ -63,7 +77,7 @@ authorModel = api.model('Author', {
     'firstname': fields.String(required=False, description='Prenom'),
     'yearOfBirth' : fields.String(required=False, description="Année de naissance", skip_none=True),
     'country' : fields.String(required=False, description="Nationalité", skip_none=True),
-    'books' : fields.List(fields.Nested(bookMiniModel), description="Liste des livres")
+    'books' : fields.List(fields.Nested(bookMiniModel), description="Liste des livres", skip_none=True)
 })
 
 bookModel = api.model('Book', {
@@ -78,16 +92,6 @@ bookModel = api.model('Book', {
     'serie' : fields.String(required=False, description="Nom de la série"),
     'numSerie' : fields.String(required=False, description="Numéro dans la série")
 })
-
-# @app.after_request
-# def after_request(response):
-#     response.headers.add('Access-Control-Allow-Origin', '*')
-#     response.headers.add('Cache-Control', 'no-store')
-#     response.headers.add('Pragma', 'no-cache')
-#     print('**********************\n')
-#     print(str(response))
-#     return response
-
 
 def pagination(func):
     # print("pagination!")
@@ -136,6 +140,21 @@ class Paginator(Resource):
         print('offset =%d' % self.offset)
         print('count =%d' % count)
 
+@login_ns.route('/')
+@login_ns.response(403, 'Forbidden')
+class Login(Resource):
+     @login_ns.doc('login')     
+     def post(self):        
+        userName = api.payload['userName']
+        password = api.payload['password']
+        passwordCyphered = cypherPassword(password)       
+        criteria = { "name" : userName, "password" : passwordCyphered }
+        user = daoUser.getWithCriteria(criteria)        
+        if not user:
+            api.abort(403, "Forbidden")        
+        token = tokenize(user)
+        return {'token' : token.decode('UTF-8')}        
+
 @users_ns.route('/<int:id>')
 @users_ns.response(404, 'User not found')
 @users_ns.param('id', 'The user id')
@@ -178,9 +197,11 @@ class UserList(Paginator):
     @users_ns.doc('create_user')
     @users_ns.marshal_with(userModel)
     def post(self):
-        print("*** create user api.payload")
+        print("*** create user")
         if ('password' in api.payload):
             api.payload['password'] = cypherPassword(api.payload['password'])
+        else :
+            return 'Missing password', 400
         return daoUser.create(api.payload), 201        
 
 @authors_ns.route('/')
@@ -199,7 +220,7 @@ class AuthorsList(Paginator):
 
     @authors_ns.doc('Creation auteur')
     @authors_ns.expect(authorModel)
-    @authors_ns.marshal_with(authorModel, code=201)
+    #@authors_ns.marshal_with(authorModel, code=201)
     def post(self):        
         return daoAuth.create(api.payload), 201
 
@@ -209,8 +230,7 @@ class AuthorsList(Paginator):
 @authors_ns.param('id', 'The author id')
 class Author(Resource):
     '''Show a single author item and lets you delete them'''
-    @authors_ns.doc('get_author')
-    @authors_ns.marshal_with(authorModel, skip_none=True)
+    @authors_ns.doc('get_author')    
     def get(self, id):
         '''Fetch a given resource'''
         author = daoAuth.get(id)

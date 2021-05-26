@@ -3,3 +3,4 @@ dbName: test.db
 sql: test.sql
 user:
   passwordKey: ERDF234EGZVZAWS
+  jwtKey: testKey

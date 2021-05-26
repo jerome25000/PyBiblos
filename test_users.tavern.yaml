@@ -1,6 +1,9 @@
 #Every test file has one or more tests...
 test_name: Test GET simple
 
+strict:
+  - json:off
+
 stages:
   - name: Make sure we have the right ID
 
@@ -10,7 +13,7 @@ stages:
 
     response:
       status_code: 200
-      body:
+      json:
         id: 1
         name: admin       
         password: "fba18a57977778ae0dff37cde75fb738fdc9fc36af4aba55b80ecff7066967b8"
@@ -21,14 +24,17 @@ stages:
 
 test_name : Test UPDATE
 
+strict:
+  - json:off
+
 stages:
-  - name: test update user id = 1 
+  - name: test update user id = 2 
     request:
-      url: http://127.0.0.1:5000/users/1
+      url: http://127.0.0.1:5000/users/2
       method: PUT
       json:
         id: 1
-        name: admin
+        name: user1
         password: "newPassword"
         adminRight: false
         writeRight: false 
@@ -36,16 +42,16 @@ stages:
     response:
       status_code: 200
 
-  - name: check user id=1 really modified
+  - name: check user id=2 really modified
     request:
-      url: http://127.0.0.1:5000/users/1
+      url: http://127.0.0.1:5000/users/2
       method: GET
 
     response:
       status_code: 200
-      body:
+      json:
         id: 1
-        name: admin
+        name: user1
         password: 8c802bee438bd87cb51d346846a8edf410c5df8092eebecf7a81f96e4c8c46fd
         adminRight: false
         writeRight: false 
@@ -53,6 +59,9 @@ stages:
 ---      
 
 test_name : Test CREATION
+
+strict:
+  - json:off
 
 stages:
   - name: test creation of new user
@@ -67,7 +76,7 @@ stages:
     
     response:
       status_code: 201
-      body:
+      json:
         id: 3
         
   - name: check user with id=3 really created
@@ -77,7 +86,7 @@ stages:
 
     response:
       status_code: 200
-      body:
+      json:
         id: 3
         name: user3
         password: e6b1492b4a3a2f9295ccbcccd836d4e2744705f82aec4ec067fda3e193a3af4c
@@ -87,6 +96,9 @@ stages:
 ---      
 
 test_name : Test DELETE
+
+strict:
+  - json:off
 
 stages:
   - name: test delete of user3

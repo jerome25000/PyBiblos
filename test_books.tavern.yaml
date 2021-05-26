@@ -1,6 +1,9 @@
 # Every test file has one or more tests...
 test_name: Test GET simple
 
+strict:
+  - json:off
+
 stages:
   - name: Make sure we have the right ID
 
@@ -10,7 +13,7 @@ stages:
 
     response:
       status_code: 200
-      body:
+      json:
         id: 1
         title : Les lutteurs immobiles
         year : 1985
@@ -18,6 +21,9 @@ stages:
 ---
 
 test_name : Test UPDATE
+
+strict:
+  - json:off
 
 stages:
   - name: test update title & year of book id = 1 
@@ -39,7 +45,7 @@ stages:
 
     response:
       status_code: 200
-      body:
+      json:
         id: 1
         title : Les lutteurs non immobiles
         year : 1986
@@ -47,6 +53,9 @@ stages:
 ---        
 
 test_name : Test CREATION
+
+strict:
+  - json:off
 
 stages:
   - name: test creation of new book
@@ -59,7 +68,7 @@ stages:
     
     response:
       status_code: 201
-      body:
+      json:
         id: 4
         
   
@@ -70,13 +79,16 @@ stages:
 
     response:
       status_code: 200
-      body:
+      json:
         id: 4
         title : Le rire du lance flamme
         year : 1984
 
 ---
 test_name : Test CREATION with given author
+
+strict:
+  - json:off
 
 stages:
   - name: test creation of new book with given author
@@ -90,13 +102,16 @@ stages:
     
     response:
       status_code: 201
-      body:
+      json:
         id: 5
 
 
 ---        
 
 test_name : Test DELETION
+
+strict:
+  - json:off
 
 stages:
   - name: test deletion of book

@@ -2,3 +2,4 @@ Werkzeug==0.16.0
 flask-restx==0.1.1
 Flask
 PyYAML
+pyjwt
