@@ -1,0 +1,73 @@
+#Every test file has one or more tests...
+test_name: Test login1
+
+strict:
+  - json:off
+
+stages:
+  - name: test login admin
+
+    request:
+      url: http://127.0.0.1:5000/login/
+      method: POST
+      json:
+        userName: admin
+        password: adminpass
+
+    response:
+      status_code: 200
+      verify_response_with:
+        # Make sure a token exists
+        function: tavern.testutils.helpers:validate_jwt
+        extra_kwargs:
+          algorithms : 
+            - HS256
+          jwt_key: token
+          key: testKey
+          options:
+            verify_signature: true
+      # save:
+      #   $ext:
+      #     function: tavern.testutils.helpers:validate_jwt
+      #     extra_kwargs:          
+      #       jwt_key: token          
+      #       options:
+      #         verify_signature: false
+      #   json:         
+      #     tokenDecoded: jwt
+          
+      # json:
+      #   tokenDecoded :
+      #     name : admin
+      #     adminRight : true
+      #     writeRight : true          
+
+  - name: test login admin wrong password
+
+    request:
+      url: http://127.0.0.1:5000/login/
+      method: POST
+      json:
+        userName: admin
+        password: badpass
+
+    response:
+      status_code: 403
+
+---
+
+test_name : Test sql injection      
+
+stages:
+  - name: test login sql injection
+
+    request:
+      url: http://127.0.0.1:5000/login/
+      method: POST
+      json:
+        userName: "admin"
+        password: "' OR 1=1'"
+
+    response:
+        status_code: 403
+
