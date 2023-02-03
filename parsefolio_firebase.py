@@ -2,6 +2,9 @@ import re
 import io
 import requests
 import json
+import firebase_admin
+from firebase_admin import firestore, credentials
+
 
 headers = {'Content-type': 'application/json'} 
 
@@ -31,7 +34,8 @@ def readFile(filename):
                 else:
                     firstname = namesArr[0]
                     lastname = ''                
-                authors.append({'firstname': firstname, 'name': lastname})
+                authorKey = lastname + "_" + firstname
+                authors.append({'key': authorKey, 'firstname': firstname, 'lastname': lastname})
 
             book = {'title': resp.group(1), 'year': year, 'number': counter, 'authors': authors}
             counter = counter + 1
@@ -49,7 +53,24 @@ def postBook(book):
     #print(r)
 
 
+def fireBaseInit():
+    cred = credentials.Certificate('key/biblos-1331d-0836bc81e8f1.json')
+    app = firebase_admin.initialize_app(cred)
+    return firestore.client()
+    
+def insertBookIntoFireBase(db, book):
+    doc_ref = db.collection('foliosf').document()
+    doc_ref.set(book)
+
+
+db = fireBaseInit()
 books = readFile('foliosf.txt')
 for book in books:
     # postBook(book)
     print(book)
+    insertBookIntoFireBase(db, book)
+    
+
+
+
+
